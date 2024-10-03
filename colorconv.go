@@ -14,25 +14,25 @@ import (
 var ErrInvalidHexValue = errors.New("colorconv: invalid input")
 var ErrOutOfRange = errors.New("colorconv: inputs out of range")
 
-//ColorToHSL convert color.Color into HSL triple, ignoring the alpha channel.
+// ColorToHSL convert color.Color into HSL triple, ignoring the alpha channel.
 func ColorToHSL(c color.Color) (h, s, l float64) {
 	r, g, b, _ := c.RGBA()
 	return RGBToHSL(uint8(r>>8), uint8(g>>8), uint8(b>>8))
 }
 
-//ColorToHSV convert color.Color into HSV triple, ignoring the alpha channel.
+// ColorToHSV convert color.Color into HSV triple, ignoring the alpha channel.
 func ColorToHSV(c color.Color) (h, s, v float64) {
 	r, g, b, _ := c.RGBA()
 	return RGBToHSV(uint8(r>>8), uint8(g>>8), uint8(b>>8))
 }
 
-//ColorToHex convert color.Color into Hex string, ignoring the alpha channel.
+// ColorToHex convert color.Color into Hex string, ignoring the alpha channel.
 func ColorToHex(c color.Color) string {
 	r, g, b, _ := c.RGBA()
 	return RGBToHex(uint8(r>>8), uint8(g>>8), uint8(b>>8))
 }
 
-//HSLToColor convert HSL triple into color.Color.
+// HSLToColor convert HSL triple into color.Color.
 func HSLToColor(h, s, l float64) (color.Color, error) {
 	r, g, b, err := HSLToRGB(h, s, l)
 	if err != nil {
@@ -41,7 +41,7 @@ func HSLToColor(h, s, l float64) (color.Color, error) {
 	return color.RGBA{R: r, G: g, B: b, A: 0}, nil
 }
 
-//HSVToColor convert HSV triple into color.Color.
+// HSVToColor convert HSV triple into color.Color.
 func HSVToColor(h, s, v float64) (color.Color, error) {
 	r, g, b, err := HSVToRGB(h, s, v)
 	if err != nil {
@@ -50,7 +50,7 @@ func HSVToColor(h, s, v float64) (color.Color, error) {
 	return color.RGBA{R: r, G: g, B: b, A: 0}, nil
 }
 
-//HexToColor convert Hex string into color.Color.
+// HexToColor convert Hex string into color.Color.
 func HexToColor(hex string) (color.Color, error) {
 	r, g, b, err := HexToRGB(hex)
 	if err != nil {
@@ -59,7 +59,7 @@ func HexToColor(hex string) (color.Color, error) {
 	return color.RGBA{R: r, G: g, B: b, A: 0}, nil
 }
 
-//RGBToHSL converts an RGB triple to an HSL triple.
+// RGBToHSL converts an RGB triple to an HSL triple.
 func RGBToHSL(r, g, b uint8) (h, s, l float64) {
 	// convert uint32 pre-multiplied value to uint8
 	// The r,g,b values are divided by 255 to change the range from 0..255 to 0..1:
@@ -93,7 +93,7 @@ func RGBToHSL(r, g, b uint8) (h, s, l float64) {
 	return h, round(s), round(l)
 }
 
-//HSLToRGB converts an HSL triple to an RGB triple.
+// HSLToRGB converts an HSL triple to an RGB triple.
 func HSLToRGB(h, s, l float64) (r, g, b uint8, err error) {
 	if h < 0 || h >= 360 ||
 		s < 0 || s > 1 ||
@@ -126,7 +126,7 @@ func HSLToRGB(h, s, l float64) (r, g, b uint8, err error) {
 	return r, g, b, nil
 }
 
-//RGBToHSV converts an RGB triple to an HSV triple.
+// RGBToHSV converts an RGB triple to an HSV triple.
 func RGBToHSV(r, g, b uint8) (h, s, v float64) {
 	// convert uint32 pre-multiplied value to uint8
 	// The r,g,b values are divided by 255 to change the range from 0..255 to 0..1:
@@ -165,8 +165,8 @@ func RGBToHSV(r, g, b uint8) (h, s, v float64) {
 	return h, round(s), round(v)
 }
 
-//HSVToRGB converts an HSV triple to an RGB triple.
-func HSVToRGB(h, s, v float64) (r, g, b uint8, err error) {
+// HSVToRGB converts an HSV triple to an RGB triple.
+func HSVToRGB64(h, s, v float64) (r, g, b float64, err error) {
 	if h < 0 || h >= 360 ||
 		s < 0 || s > 1 ||
 		v < 0 || v > 1 {
@@ -191,18 +191,30 @@ func HSVToRGB(h, s, v float64) (r, g, b uint8, err error) {
 	case 300 <= h && h < 360:
 		Rnot, Gnot, Bnot = C, 0, X
 	}
-	r = uint8(math.Round((Rnot + m) * 255))
-	g = uint8(math.Round((Gnot + m) * 255))
-	b = uint8(math.Round((Bnot + m) * 255))
+	r = Rnot + m
+	g = Gnot + m
+	b = Bnot + m
 	return r, g, b, nil
 }
 
-//RGBToHex converts an RGB triple to a Hex string in the format of 0xffff.
+// HSVToRGB converts an HSV triple to an RGB triple.
+func HSVToRGB(h, s, v float64) (r, g, b uint8, err error) {
+	r0, g0, b0, err := HSVToRGB64(h, s, v)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	r = uint8(math.Round(r0 * 255))
+	g = uint8(math.Round(g0 * 255))
+	b = uint8(math.Round(b0 * 255))
+	return r, g, b, nil
+}
+
+// RGBToHex converts an RGB triple to a Hex string in the format of 0xffff.
 func RGBToHex(r, g, b uint8) string {
 	return fmt.Sprintf("0x%02x%02x%02x", r, g, b)
 }
 
-//HexToRGB converts a Hex string to an RGB triple.
+// HexToRGB converts a Hex string to an RGB triple.
 func HexToRGB(hex string) (r, g, b uint8, err error) {
 	// remove prefixes if found in the input string
 	hex = strings.Replace(hex, "0x", "", -1)
@@ -226,7 +238,7 @@ func HexToRGB(hex string) (r, g, b uint8, err error) {
 	return r, g, b, nil
 }
 
-//RGBToGrayAverage calculates the grayscale value of RGB with the average method, ignoring the alpha channel.
+// RGBToGrayAverage calculates the grayscale value of RGB with the average method, ignoring the alpha channel.
 func RGBToGrayAverage(r, g, b uint8) color.Gray {
 	return RGBToGrayWithWeight(r, g, b, 1, 1, 1)
 }
